@@ -1,0 +1,21 @@
+name: flutter_remarkable_api
+description: A new Flutter package.
+version: 0.0.1
+author:
+homepage:
+
+environment:
+  sdk: ">=2.12.0-0 <3.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  http: ^0.12.2
+  uuid: ^2.2.2
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
