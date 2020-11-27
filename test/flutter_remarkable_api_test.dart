@@ -1,12 +1,19 @@
+// @dart=2.9
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_remarkable_api/flutter_remarkable_api.dart';
+import 'utils.dart';
+
+const AUTH_FILE_PATH = "test_auth.json";
 
 void main() {
-  var client = RemarkableClient();
+  var client = loadAuth();
 
-  test("register", () async {
-    await client.registerDevice("htmqiidu"); // get from https://my.remarkable.com/connect/desktop
-    expect(client.deviceToken, isNotNull);
+  test("renewToken", () async {
+    var oldUserToken = client.userToken;
+    await client.renewToken();
+    expect(client.userToken == oldUserToken, equals(false));
+    expect(client.isAuth, equals(true));
+
+    saveAuth(client);
   });
 }

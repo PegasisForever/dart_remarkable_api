@@ -16,76 +16,66 @@ class RemarkableHttpClient {
 
   Map<String, String> _getHeaders({
     required Map<String, String>? inputHeaders,
-    required String? userToken,
+    required String? auth,
   }) {
     var headers = inputHeaders ?? {};
     headers["user-agent"] = userAgent;
-    if (userToken != null) {
-      headers["Authorization"] = "Bearer " + userToken;
+    if (auth != null) {
+      headers["Authorization"] = "Bearer " + auth;
     }
 
     return headers;
   }
 
-  Future<http.Response> post(
-    String path, {
-    String? userToken,
-    Map<String, dynamic>? body,
-    Map<String, String>? headers,
-  }) async {
-    headers = headers ?? {};
-    headers["user-agent"] = userAgent;
-    if (userToken != null) {
-      headers["Authorization"] = "Bearer " + userToken;
-    }
-
+  Uri _getUri(String path) {
     var uri = Uri.parse(path);
     if (uri.scheme == "") uri = uri.replace(scheme: "https");
     if (uri.host == "") uri = uri.replace(host: DEFAULT_HOST);
 
+    return uri;
+  }
+
+  Future<http.Response> post(
+    String path, {
+    String? auth,
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+  }) async {
     return await _httpClient.post(
-      uri,
-      headers: _getHeaders(inputHeaders: headers, userToken: userToken),
+      _getUri(path),
+      headers: _getHeaders(inputHeaders: headers, auth: auth),
       body: jsonEncode(body),
     );
   }
 
   Future<http.Response> get(
     String path, {
-    String? userToken,
+    String? auth,
     Map<String, dynamic>? params,
     Map<String, String>? headers,
   }) async {
-    headers = headers ?? {};
-    headers["user-agent"] = userAgent;
-    if (userToken != null) {
-      headers["Authorization"] = "Bearer " + userToken;
-    }
-
-    var uri = Uri.parse(path);
-    if (uri.scheme == "") uri = uri.replace(scheme: "https");
-    if (uri.host == "") uri = uri.replace(host: DEFAULT_HOST);
-    uri.replace(queryParameters: params);
-
-    return await _httpClient.get(uri, headers: headers);
+    return await _httpClient.get(
+      _getUri(path).replace(queryParameters: params),
+      headers: _getHeaders(
+        inputHeaders: headers,
+        auth: auth,
+      ),
+    );
   }
 
   Future<http.Response> put(
     String path, {
-    String? userToken,
+    String? auth,
     dynamic data,
     Map<String, String>? headers,
   }) async {
-    headers = headers ?? {};
-    headers["user-agent"] = userAgent;
-    if (userToken != null) {
-      headers["Authorization"] = "Bearer " + userToken;
-    }
-
-    var uri = Uri.parse(path);
-    if (uri.scheme == "") uri = uri.replace(scheme: "https");
-    if (uri.host == "") uri = uri.replace(host: DEFAULT_HOST);
-
-    return await _httpClient.put(uri, headers: headers, body: data);
+    return await _httpClient.put(
+      _getUri(path),
+      headers: _getHeaders(
+        inputHeaders: headers,
+        auth: auth,
+      ),
+      body: data,
+    );
   }
 }

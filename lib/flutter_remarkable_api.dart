@@ -14,12 +14,16 @@ const SERVICE_MGR_URL =
 class RemarkableClient {
   String? deviceToken;
   String? userToken;
-  String? userAgent;
   final RemarkableHttpClient _rmHttpClient;
   final _uuid = Uuid();
 
-  RemarkableClient({RemarkableHttpClient? rmHttpClient})
-      : this._rmHttpClient = rmHttpClient ?? RemarkableHttpClient();
+  RemarkableClient({
+    RemarkableHttpClient? rmHttpClient,
+    this.deviceToken,
+    this.userToken,
+  }) : this._rmHttpClient = rmHttpClient ?? RemarkableHttpClient();
+
+  bool get isAuth => deviceToken != null && userToken != null;
 
   Future<void> registerDevice(String code) async {
     var response = await _rmHttpClient.post(DEVICE_TOKEN_URL, body: {
@@ -31,6 +35,20 @@ class RemarkableClient {
       deviceToken = response.body;
     } else {
       throw "Error registering device, status: ${response.statusCode}, body: ${response.body}";
+    }
+  }
+
+  Future<void> renewToken() async {
+    if (deviceToken == null) throw "deviceToken is null";
+
+    var response = await _rmHttpClient.post(
+      USER_TOKEN_URL,
+      auth: deviceToken,
+    );
+    if (response.statusCode == 200) {
+      userToken = response.body;
+    } else {
+      throw "Error renewing token, status: ${response.statusCode}, body: ${response.body}";
     }
   }
 }
