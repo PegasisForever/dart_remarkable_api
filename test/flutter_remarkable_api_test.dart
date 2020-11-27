@@ -16,4 +16,9 @@ void main() {
 
     saveAuth(client);
   });
+
+  test("getRootEntities", () async {
+    var root = await client.getRoot();
+
+  });
 }
