@@ -1,10 +1,9 @@
 // @dart=2.9
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 
-import 'package:flutter_remarkable_api/flutter_remarkable_api.dart';
+import 'package:dart_remarkable_api/dart_remarkable_api.dart';
 
 import 'utils.dart';
-
 
 void main() {
   var client = RemarkableClient();

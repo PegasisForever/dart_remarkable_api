@@ -1,10 +1,10 @@
-library flutter_remarkable_api;
+library dart_remarkable_api;
 
 import 'dart:convert';
 
-import 'package:flutter_remarkable_api/model/trash.dart';
-import 'package:flutter_remarkable_api/remarkable_http_client.dart';
-import 'package:flutter_remarkable_api/untils.dart';
+import 'package:dart_remarkable_api/model/trash.dart';
+import 'package:dart_remarkable_api/remarkable_http_client.dart';
+import 'package:dart_remarkable_api/untils.dart';
 
 import 'model/entity.dart';
 import 'model/root.dart';

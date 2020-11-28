@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_remarkable_api/flutter_remarkable_api.dart';
+import 'package:dart_remarkable_api/dart_remarkable_api.dart';
 
 const AUTH_FILE_PATH = "test_auth.json";
 

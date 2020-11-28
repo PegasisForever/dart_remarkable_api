@@ -1,4 +1,4 @@
-import 'package:flutter_remarkable_api/model/entity.dart';
+import 'package:dart_remarkable_api/model/entity.dart';
 
 class Document extends Entity {
   final int currentPage;

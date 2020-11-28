@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:flutter_remarkable_api/model/document.dart';
-import 'package:flutter_remarkable_api/model/folder.dart';
+import 'package:dart_remarkable_api/model/document.dart';
+import 'package:dart_remarkable_api/model/folder.dart';
 
 // Class hierarchy:
 // Entity

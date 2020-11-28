@@ -1,5 +1,5 @@
-import 'package:flutter_remarkable_api/model/entity.dart';
-import 'package:flutter_remarkable_api/model/folder.dart';
+import 'package:dart_remarkable_api/model/entity.dart';
+import 'package:dart_remarkable_api/model/folder.dart';
 
 class Root extends Folder {
   Root({

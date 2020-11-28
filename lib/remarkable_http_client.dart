@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 const DEFAULT_HOST =
     "document-storage-production-dot-remarkable-production.appspot.com";
-const DEFAULT_USER_AGENT = "flutter_remarkable_api";
+const DEFAULT_USER_AGENT = "dart_remarkable_api";
 
 class RemarkableHttpClient {
   final String userAgent;
