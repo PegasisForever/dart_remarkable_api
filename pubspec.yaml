@@ -1,5 +1,5 @@
-name: flutter_remarkable_api
-description: A new Flutter package.
+name: dart_remarkable_api
+description: reMarkable client API implemented in pure dart.
 version: 0.0.1
 author:
 homepage:
