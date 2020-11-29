@@ -6,7 +6,7 @@ class Folder extends Entity {
 
   Folder({
     required RemarkableClient client,
-    required EntityResponse entityResponse,
+    required EntityResponseSucceeded entityResponse,
     required this.children,
   }) : super(
           client: client,

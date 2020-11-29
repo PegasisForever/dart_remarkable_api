@@ -29,53 +29,63 @@ abstract class Entity {
   // is null until [linkRelationship] is used, always null for [Root]
   Folder? parent;
 
+  bool isDeleted = true;
+
   Entity({
     required this.client,
-    required EntityResponse entityResponse,
+    required EntityResponseSucceeded entityResponse,
   })   : id = entityResponse.id,
         version = entityResponse.version,
         modifiedClient = entityResponse.modifiedClient,
         displayName = entityResponse.displayName,
         bookmarked = entityResponse.bookmarked,
-        parentId = entityResponse.parentId {
-    if (!entityResponse.success) {
-      throw "non success response, message: ${entityResponse.message}";
-    }
-  }
+        parentId = entityResponse.parentId;
 
   factory Entity.create(
       RemarkableClient client, EntityResponse entityResponse) {
-    if (entityResponse.type == EntityType.COLLECTION) {
-      return Folder(
-        client: client,
-        entityResponse: entityResponse,
-        children: Set(),
-      );
+    if (entityResponse is EntityResponseFailed) {
+      throw "non success response, message: ${entityResponse.message}";
+    } else if (entityResponse is EntityResponseSucceeded) {
+      if (entityResponse.type == EntityType.COLLECTION) {
+        return Folder(
+          client: client,
+          entityResponse: entityResponse,
+          children: Set(),
+        );
+      } else {
+        return Document(
+          client: client,
+          entityResponse: entityResponse,
+        );
+      }
     } else {
-      return Document(
-        client: client,
-        entityResponse: entityResponse,
-      );
+      throw "Unknown EntityResponse type: ${entityResponse.runtimeType}";
     }
   }
 
   @protected
   void update(EntityResponse entityResponse) {
-    if (entityResponse.id != id) throw "new id is different";
-    version = entityResponse.version;
-    modifiedClient = entityResponse.modifiedClient;
-    displayName = entityResponse.displayName;
-    bookmarked = entityResponse.bookmarked;
-    var newParentId = entityResponse.parentId;
-    // todo add testcases
-    if (newParentId != parentId) {
-      var oldParent = parent!;
-      var allEntities = getRoot().allEntities;
-      var newParent = allEntities[newParentId] as Folder;
+    if (entityResponse is EntityResponseFailed) {
+      isDeleted = true;
+    } else if (entityResponse is EntityResponseSucceeded) {
+      if (entityResponse.id != id) throw "new id is different";
+      version = entityResponse.version;
+      modifiedClient = entityResponse.modifiedClient;
+      displayName = entityResponse.displayName;
+      bookmarked = entityResponse.bookmarked;
+      var newParentId = entityResponse.parentId;
+      // todo add testcases
+      if (newParentId != parentId) {
+        var oldParent = parent!;
+        var allEntities = getRoot().allEntities;
+        var newParent = allEntities[newParentId] as Folder;
 
-      oldParent.children.remove(this);
-      newParent.children.add(this);
-      parent = newParent;
+        oldParent.children.remove(this);
+        newParent.children.add(this);
+        parent = newParent;
+      }
+    } else {
+      throw "Unknown EntityResponse type: ${entityResponse.runtimeType}";
     }
   }
 
@@ -121,7 +131,7 @@ EntityType parseEntityType(String str) {
   } else if (str == "DocumentType") {
     return EntityType.DOCUMENT;
   } else {
-    throw "Unsupported type: $str";
+    throw "Unsupported type: \"$str\"";
   }
 }
 
@@ -133,11 +143,29 @@ String entityTypeToString(EntityType type) {
   }
 }
 
-class EntityResponse {
+abstract class EntityResponse {
+  factory EntityResponse(Map<String, dynamic> json) {
+    if (_extractRequired(json, "Success")) {
+      return EntityResponseSucceeded(json);
+    } else {
+      return EntityResponseFailed(json);
+    }
+  }
+
+  EntityResponse._();
+}
+
+class EntityResponseFailed extends EntityResponse {
+  final String message;
+
+  EntityResponseFailed(Map<String, dynamic> json)
+      : message = _extract(json, "Message") ?? "",
+        super._();
+}
+
+class EntityResponseSucceeded extends EntityResponse {
   final String id;
   final int version;
-  final String message;
-  final bool success;
   final String blobURLGet;
   final DateTime blobURLGetExpires;
   final DateTime modifiedClient;
@@ -147,11 +175,10 @@ class EntityResponse {
   final bool bookmarked;
   final String parentId;
 
-  EntityResponse(Map<String, dynamic> json)
+  EntityResponseSucceeded(Map<String, dynamic> json)
       : id = _extractRequired(json, "ID"),
         version = _extract(json, "Version") ?? 1,
-        message = _extract(json, "Message") ?? "",
-        success = _extract(json, "Success") ?? true,
+        // success = _extract(json, "Success") ?? true,
         blobURLGet = _extract(json, "BlobURLGet") ?? "",
         blobURLGetExpires = DateTime.parse(
             _extract<String>(json, "BlobURLGetExpires") ??
@@ -162,11 +189,13 @@ class EntityResponse {
         displayName = _extractRequired(json, "VissibleName"),
         currentPage = _extract(json, "CurrentPage") ?? 0,
         bookmarked = _extract(json, "Bookmarked") ?? false,
-        parentId = _extract(json, "Parent") ?? "";
+        parentId = _extract(json, "Parent") ?? "",
+        super._();
 
   // type: CollectionType or DocumentType
-  factory EntityResponse.empty(String id, EntityType type, String displayName) {
-    return EntityResponse({
+  factory EntityResponseSucceeded.empty(
+      String id, EntityType type, String displayName) {
+    return EntityResponseSucceeded({
       "ID": id,
       "Version": 1,
       "Message": "",
@@ -181,22 +210,22 @@ class EntityResponse {
       "Parent": ""
     });
   }
+}
 
-  static T _extractRequired<T>(
-    Map<String, dynamic> json,
-    String key,
-  ) {
-    if (!json.containsKey(key))
-      throw "Key $key not found in json ${jsonEncode(json)}";
-    return json[key] as T;
-  }
+T _extractRequired<T>(
+  Map<String, dynamic> json,
+  String key,
+) {
+  if (!json.containsKey(key))
+    throw "Key \"$key\" not found in json ${jsonEncode(json)}";
+  return json[key] as T;
+}
 
-  static T? _extract<T>(
-    Map<String, dynamic> json,
-    String key,
-  ) {
-    if (!json.containsKey(key))
-      print("Warning: Key $key not found in json ${jsonEncode(json)}");
-    return json[key] as T;
-  }
+T? _extract<T>(
+  Map<String, dynamic> json,
+  String key,
+) {
+  if (!json.containsKey(key))
+    print("Warning: Key \"$key\" not found in json ${jsonEncode(json)}");
+  return json[key] as T;
 }

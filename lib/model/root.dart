@@ -11,7 +11,7 @@ class Root extends Folder {
     required this.allEntities,
   }) : super(
           client: client,
-          entityResponse: EntityResponse.empty(
+          entityResponse: EntityResponseSucceeded.empty(
             "",
             EntityType.COLLECTION,
             "Root",

@@ -88,6 +88,7 @@ class RemarkableClient {
       entity.linkRelationship(allEntities);
     }
 
+    // todo remove files on disk but not in the root tree (deleted files)
     return root;
   }
 }

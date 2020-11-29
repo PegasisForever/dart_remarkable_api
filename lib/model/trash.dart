@@ -8,7 +8,7 @@ class Trash extends Folder {
     required Set<Entity> children,
   }) : super(
           client: client,
-          entityResponse: EntityResponse.empty(
+          entityResponse: EntityResponseSucceeded.empty(
             "trash",
             EntityType.COLLECTION,
             "Trash",

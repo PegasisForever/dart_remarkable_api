@@ -20,7 +20,7 @@ class Document extends Entity {
 
   Document({
     required RemarkableClient client,
-    required EntityResponse entityResponse,
+    required EntityResponseSucceeded entityResponse,
   })   : currentPage = entityResponse.currentPage,
         blobURLGet = entityResponse.blobURLGet,
         blobURLGetExpires = entityResponse.blobURLGetExpires,
@@ -58,11 +58,8 @@ class Document extends Entity {
     var fileBytes = await fileStream.stream.toBytes();
     var zip = await _unzip(fileBytes.toList());
 
+    await deleteFilesOnDisk();
     var basePath = client.dataPath + '/' + id;
-    var baseDir = Directory(basePath);
-    if (await baseDir.exists()) {
-      await baseDir.delete(recursive: true);
-    }
     for (final zipEntry in zip) {
       if (zipEntry.isFile) {
         final data = zipEntry.content as List<int>;
@@ -78,12 +75,26 @@ class Document extends Entity {
     metaDataFile.writeAsString(jsonEncode({"Version": version}));
   }
 
+  Future<void> deleteFilesOnDisk() async {
+    var basePath = client.dataPath + '/' + id;
+    var baseDir = Directory(basePath);
+    if (await baseDir.exists()) {
+      await baseDir.delete(recursive: true);
+    }
+  }
+
   @override
   void update(EntityResponse entityResponse) {
     super.update(entityResponse);
-    currentPage = entityResponse.currentPage;
-    blobURLGet = entityResponse.blobURLGet;
-    blobURLGetExpires = entityResponse.blobURLGetExpires;
+    if (entityResponse is EntityResponseFailed) {
+      // do nothing
+    } else if (entityResponse is EntityResponseSucceeded) {
+      currentPage = entityResponse.currentPage;
+      blobURLGet = entityResponse.blobURLGet;
+      blobURLGetExpires = entityResponse.blobURLGetExpires;
+    } else {
+      throw "Unknown EntityResponse type: ${entityResponse.runtimeType}";
+    }
   }
 }
 
