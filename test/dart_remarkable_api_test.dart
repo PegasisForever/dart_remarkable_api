@@ -1,7 +1,7 @@
 // @dart=2.9
 
 import 'package:dart_remarkable_api/model/document.dart';
-import 'package:dart_remarkable_api/model/entity.dart';
+import 'package:dart_remarkable_api/model/entity_response.dart';
 import 'package:dart_remarkable_api/model/root.dart';
 import 'package:dart_remarkable_api/untils.dart';
 import 'package:test/test.dart';

@@ -6,6 +6,7 @@ import 'dart:isolate';
 import 'package:archive/archive.dart';
 import 'package:dart_remarkable_api/dart_remarkable_api.dart';
 import 'package:dart_remarkable_api/model/entity.dart';
+import 'package:dart_remarkable_api/model/entity_response.dart';
 
 enum DocumentType {
   NOTEBOOK,

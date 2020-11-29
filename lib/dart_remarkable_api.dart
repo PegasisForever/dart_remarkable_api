@@ -2,6 +2,7 @@ library dart_remarkable_api;
 
 import 'dart:convert';
 
+import 'package:dart_remarkable_api/model/entity_response.dart';
 import 'package:dart_remarkable_api/model/trash.dart';
 import 'package:dart_remarkable_api/remarkable_http_client.dart';
 import 'package:dart_remarkable_api/untils.dart';
