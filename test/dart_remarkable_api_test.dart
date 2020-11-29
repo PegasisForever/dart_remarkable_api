@@ -22,12 +22,13 @@ void main() {
 
   Root root;
   test("getRootEntities", () async {
-    root = await client.getRoot();
+    root = await client.getRoot(false);
   });
 
   test("download", () async {
     Document c = root.children.firstWhere(
         (child) => child.displayName.contains("LVM") && child is Document);
     await c.download();
+    expect(await c.isDownloaded(), equals(true));
   });
 }

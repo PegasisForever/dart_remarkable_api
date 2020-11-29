@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -13,41 +14,36 @@ enum DocumentType {
 }
 
 class Document extends Entity {
-  final int currentPage;
+  int currentPage;
+  String blobURLGet;
+  DateTime blobURLGetExpires;
 
   Document({
     required RemarkableClient client,
-    required String id,
-    required int version,
-    required String message,
-    required bool success,
-    required String blobURLGet,
-    required DateTime blobURLGetExpires,
-    required DateTime modifiedClient,
-    required String displayName,
-    required this.currentPage,
-    required bool bookmarked,
-    required parentId,
-    required parent,
-  }) : super(
+    required EntityResponse entityResponse,
+  })   : currentPage = entityResponse.currentPage,
+        blobURLGet = entityResponse.blobURLGet,
+        blobURLGetExpires = entityResponse.blobURLGetExpires,
+        super(
           client: client,
-          id: id,
-          version: version,
-          message: message,
-          success: success,
-          blobURLGet: blobURLGet,
-          blobURLGetExpires: blobURLGetExpires,
-          modifiedClient: modifiedClient,
-          displayName: displayName,
-          bookmarked: bookmarked,
-          parentId: parentId,
-          parent: parent,
+          entityResponse: entityResponse,
         );
 
-  Future<void> download() async {
-    if (blobURLGetExpires.isBefore(DateTime.now())) {
-      // todo refresh
+  Future<bool> isDownloaded() async {
+    try {
+      var metaDataFile = File(
+          client.dataPath + '/' + id + '/.dart_remarkable_api_metadata.json');
+      var metaData = jsonDecode(await metaDataFile.readAsString());
+      return metaData["Version"] == version;
+    } catch (_) {
+      return false;
     }
+  }
+
+  Future<void> download() async {
+    if (await isDownloaded()) return;
+    if (blobURLGet.isEmpty || blobURLGetExpires.isBefore(DateTime.now()))
+      await refresh(true);
 
     var fileStream = await client.rmHttpClient.getStreamed(
       blobURLGet,
@@ -78,6 +74,16 @@ class Document extends Entity {
         await dir.create();
       }
     }
+    var metaDataFile = File(basePath + '/.dart_remarkable_api_metadata.json');
+    metaDataFile.writeAsString(jsonEncode({"Version": version}));
+  }
+
+  @override
+  void update(EntityResponse entityResponse) {
+    super.update(entityResponse);
+    currentPage = entityResponse.currentPage;
+    blobURLGet = entityResponse.blobURLGet;
+    blobURLGetExpires = entityResponse.blobURLGetExpires;
   }
 }
 

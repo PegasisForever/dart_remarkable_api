@@ -8,17 +8,16 @@ class Trash extends Folder {
     required List<Entity> children,
   }) : super(
           client: client,
-          id: "trash",
-          version: 1,
-          message: "",
-          success: true,
-          blobURLGet: "",
-          blobURLGetExpires: DateTime.parse("0001-01-01T00:00:00Z"),
-          modifiedClient: DateTime.parse("0001-01-01T00:00:00Z"),
-          displayName: "Trash",
-          bookmarked: false,
-          parentId: "",
-          parent: null,
+          entityResponse: EntityResponse.empty(
+            "trash",
+            EntityType.COLLECTION,
+            "Trash",
+          ),
           children: children,
         );
+
+  @override
+  Future<void> refresh(bool withBlob) async {
+    return;
+  }
 }

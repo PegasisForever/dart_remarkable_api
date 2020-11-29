@@ -8,17 +8,11 @@ class Root extends Folder {
     required List<Entity> children,
   }) : super(
           client: client,
-          id: "",
-          version: 1,
-          message: "",
-          success: true,
-          blobURLGet: "",
-          blobURLGetExpires: DateTime.parse("0001-01-01T00:00:00Z"),
-          modifiedClient: DateTime.parse("0001-01-01T00:00:00Z"),
-          displayName: "Root",
-          bookmarked: false,
-          parentId: "",
-          parent: null,
+          entityResponse: EntityResponse.empty(
+            "",
+            EntityType.COLLECTION,
+            "Root",
+          ),
           children: children,
         );
 
@@ -29,5 +23,10 @@ class Root extends Folder {
         children.add(entity);
       }
     }
+  }
+
+  @override
+  Future<void> refresh(bool withBlob) async {
+    return;
   }
 }

@@ -6,31 +6,11 @@ class Folder extends Entity {
 
   Folder({
     required RemarkableClient client,
-    required String id,
-    required int version,
-    required String message,
-    required bool success,
-    required String blobURLGet,
-    required DateTime blobURLGetExpires,
-    required DateTime modifiedClient,
-    required String displayName,
-    required bool bookmarked,
-    required parentId,
-    required parent,
+    required EntityResponse entityResponse,
     required this.children,
   }) : super(
           client: client,
-          id: id,
-          version: version,
-          message: message,
-          success: success,
-          blobURLGet: blobURLGet,
-          blobURLGetExpires: blobURLGetExpires,
-          modifiedClient: modifiedClient,
-          displayName: displayName,
-          bookmarked: bookmarked,
-          parentId: parentId,
-          parent: parent,
+          entityResponse: entityResponse,
         );
 
   @override

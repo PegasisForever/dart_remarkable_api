@@ -12,6 +12,7 @@ dependencies:
   http: ^0.12.2
   uuid: ^2.2.2
   archive: ^2.0.13
+  meta: ^1.2.4
 
 dev_dependencies:
   test: ^1.15.7

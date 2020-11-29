@@ -59,13 +59,19 @@ class RemarkableClient {
     }
   }
 
-  Future<Root> getRoot() async {
+  // withBlob:
+  // true: get download links for all documents, but with performance
+  // penalty (~3s), use when you are going to download all documents
+  // afterwards
+  // false: without download links (~0.5s), use when you only need a list of
+  // documents. When you call [download] method on a document instance later,
+  // it will send an extra request to get the download link for that individual
+  // document before downloading.
+  Future<Root> getRoot(bool withBlob) async {
     var response = await rmHttpClient.get(
       "/document-storage/json/2/docs",
       auth: userToken,
-      params: {
-        "withBlob": "true",
-      },
+      params: withBlob ? {"withBlob": "true"} : null,
     );
     var jsonArray = jsonDecode(response.body);
 
@@ -74,7 +80,7 @@ class RemarkableClient {
     allEntities[""] = root;
     allEntities["trash"] = Trash(client: this, children: []);
     for (final entityJson in jsonArray) {
-      var entity = Entity.parse(this, entityJson);
+      var entity = Entity.create(this, EntityResponse(entityJson));
       allEntities[entity.id] = entity;
     }
 
