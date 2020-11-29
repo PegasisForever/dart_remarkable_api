@@ -1,5 +1,7 @@
 // @dart=2.9
 
+import 'package:dart_remarkable_api/model/document.dart';
+import 'package:dart_remarkable_api/model/root.dart';
 import 'package:test/test.dart';
 
 import 'utils.dart';
@@ -18,7 +20,14 @@ void main() {
     saveAuth(client);
   });
 
+  Root root;
   test("getRootEntities", () async {
-    var root = await client.getRoot();
+    root = await client.getRoot();
+  });
+
+  test("download", () async {
+    Document c = root.children.firstWhere(
+        (child) => child.displayName.contains("LVM") && child is Document);
+    await c.download();
   });
 }

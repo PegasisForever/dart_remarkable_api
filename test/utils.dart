@@ -18,6 +18,7 @@ RemarkableClient loadAuth() {
   var file = File(AUTH_FILE_PATH);
   var json = jsonDecode(file.readAsStringSync());
   return RemarkableClient(
+    dataPath: "./test_data",
     deviceToken: json["device_token"],
     userToken: json["user_token"],
   );

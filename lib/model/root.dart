@@ -1,10 +1,13 @@
+import 'package:dart_remarkable_api/dart_remarkable_api.dart';
 import 'package:dart_remarkable_api/model/entity.dart';
 import 'package:dart_remarkable_api/model/folder.dart';
 
 class Root extends Folder {
   Root({
+    required RemarkableClient client,
     required List<Entity> children,
   }) : super(
+          client: client,
           id: "",
           version: 1,
           message: "",

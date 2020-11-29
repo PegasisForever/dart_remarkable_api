@@ -20,18 +20,20 @@ const SERVICE_MGR_URL =
 class RemarkableClient {
   String? deviceToken;
   String? userToken;
-  final RemarkableHttpClient _rmHttpClient;
+  String dataPath;
+  final RemarkableHttpClient rmHttpClient;
 
   RemarkableClient({
+    required this.dataPath,
     RemarkableHttpClient? rmHttpClient,
     this.deviceToken,
     this.userToken,
-  }) : this._rmHttpClient = rmHttpClient ?? RemarkableHttpClient();
+  }) : this.rmHttpClient = rmHttpClient ?? RemarkableHttpClient();
 
   bool get isAuth => deviceToken != null && userToken != null;
 
   Future<void> registerDevice(String code) async {
-    var response = await _rmHttpClient.post(DEVICE_TOKEN_URL, body: {
+    var response = await rmHttpClient.post(DEVICE_TOKEN_URL, body: {
       "code": code,
       "deviceDesc": DEVICE,
       "deviceID": newUuidV4(),
@@ -46,7 +48,7 @@ class RemarkableClient {
   Future<void> renewToken() async {
     if (deviceToken == null) throw "deviceToken is null";
 
-    var response = await _rmHttpClient.post(
+    var response = await rmHttpClient.post(
       USER_TOKEN_URL,
       auth: deviceToken,
     );
@@ -58,18 +60,21 @@ class RemarkableClient {
   }
 
   Future<Root> getRoot() async {
-    var response = await _rmHttpClient.get(
+    var response = await rmHttpClient.get(
       "/document-storage/json/2/docs",
       auth: userToken,
+      params: {
+        "withBlob": "true",
+      },
     );
     var jsonArray = jsonDecode(response.body);
 
     Map<String, Entity> allEntities = {};
-    var root = Root(children: []);
+    var root = Root(client: this, children: []);
     allEntities[""] = root;
-    allEntities["trash"] = Trash(children: []);
+    allEntities["trash"] = Trash(client: this, children: []);
     for (final entityJson in jsonArray) {
-      var entity = Entity.parse(entityJson);
+      var entity = Entity.parse(this, entityJson);
       allEntities[entity.id] = entity;
     }
 

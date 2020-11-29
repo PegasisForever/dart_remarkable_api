@@ -1,18 +1,18 @@
 import 'dart:convert';
 
+import 'package:dart_remarkable_api/dart_remarkable_api.dart';
 import 'package:dart_remarkable_api/model/document.dart';
 import 'package:dart_remarkable_api/model/folder.dart';
 
 // Class hierarchy:
 // Entity
 //   Document
-//     Notebook
-//     Pdf
-//     Epub
 //   Folder
 //     Root
 //     Trash
 abstract class Entity {
+  final RemarkableClient client;
+
   // When this is the root: an empty string, else: always an UUID
   final String id;
   final int version;
@@ -35,6 +35,7 @@ abstract class Entity {
   Entity? parent;
 
   Entity({
+    required this.client,
     required this.id,
     required this.version,
     required this.message,
@@ -48,7 +49,7 @@ abstract class Entity {
     required this.parent,
   });
 
-  factory Entity.parse(Map<String, dynamic> json) {
+  factory Entity.parse(RemarkableClient client, Map<String, dynamic> json) {
     String type = _extractRequired(json, "Type");
     if (type != "CollectionType" && type != "DocumentType")
       throw "Unsupported type: $type";
@@ -70,6 +71,7 @@ abstract class Entity {
 
     if (type == "CollectionType") {
       return Folder(
+        client: client,
         id: id,
         version: version,
         message: message,
@@ -86,6 +88,7 @@ abstract class Entity {
     } else {
       int currentPage = _extract(json, "CurrentPage") ?? 0;
       return Document(
+        client: client,
         id: id,
         version: version,
         message: message,

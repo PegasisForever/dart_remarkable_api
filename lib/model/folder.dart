@@ -1,9 +1,11 @@
+import 'package:dart_remarkable_api/dart_remarkable_api.dart';
 import 'package:dart_remarkable_api/model/entity.dart';
 
 class Folder extends Entity {
   final List<Entity> children;
 
   Folder({
+    required RemarkableClient client,
     required String id,
     required int version,
     required String message,
@@ -17,6 +19,7 @@ class Folder extends Entity {
     required parent,
     required this.children,
   }) : super(
+          client: client,
           id: id,
           version: version,
           message: message,

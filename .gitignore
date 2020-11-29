@@ -74,3 +74,4 @@ build/
 !**/ios/**/default.perspectivev3
 
 test_auth.json
+test_data
