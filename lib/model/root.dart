@@ -3,9 +3,12 @@ import 'package:dart_remarkable_api/model/entity.dart';
 import 'package:dart_remarkable_api/model/folder.dart';
 
 class Root extends Folder {
+  final Map<String,Entity> allEntities;
+
   Root({
     required RemarkableClient client,
-    required List<Entity> children,
+    required Set<Entity> children,
+    required this.allEntities,
   }) : super(
           client: client,
           entityResponse: EntityResponse.empty(

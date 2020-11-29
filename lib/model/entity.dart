@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dart_remarkable_api/dart_remarkable_api.dart';
 import 'package:dart_remarkable_api/model/document.dart';
 import 'package:dart_remarkable_api/model/folder.dart';
+import 'package:dart_remarkable_api/model/root.dart';
 import 'package:meta/meta.dart';
 
 // Class hierarchy:
@@ -26,7 +27,7 @@ abstract class Entity {
   final String parentId;
 
   // is null until [linkRelationship] is used, always null for [Root]
-  Entity? parent;
+  Folder? parent;
 
   Entity({
     required this.client,
@@ -48,7 +49,7 @@ abstract class Entity {
       return Folder(
         client: client,
         entityResponse: entityResponse,
-        children: [],
+        children: Set(),
       );
     } else {
       return Document(
@@ -65,6 +66,17 @@ abstract class Entity {
     modifiedClient = entityResponse.modifiedClient;
     displayName = entityResponse.displayName;
     bookmarked = entityResponse.bookmarked;
+    var newParentId = entityResponse.parentId;
+    // todo add testcases
+    if (newParentId != parentId) {
+      var oldParent = parent!;
+      var allEntities = getRoot().allEntities;
+      var newParent = allEntities[newParentId] as Folder;
+
+      oldParent.children.remove(this);
+      newParent.children.add(this);
+      parent = newParent;
+    }
   }
 
   Future<void> refresh(bool withBlob) async {
@@ -86,7 +98,13 @@ abstract class Entity {
 
   // map of id to entity
   void linkRelationship(Map<String, Entity> map) {
-    parent = map[parentId];
+    parent = map[parentId] as Folder;
+  }
+
+  Root getRoot() {
+    Entity curr = this;
+    while (curr is! Root) curr = curr.parent!;
+    return curr;
   }
 
   @override

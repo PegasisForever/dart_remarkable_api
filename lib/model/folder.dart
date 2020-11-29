@@ -2,7 +2,7 @@ import 'package:dart_remarkable_api/dart_remarkable_api.dart';
 import 'package:dart_remarkable_api/model/entity.dart';
 
 class Folder extends Entity {
-  final List<Entity> children;
+  final Set<Entity> children;
 
   Folder({
     required RemarkableClient client,

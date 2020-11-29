@@ -76,9 +76,9 @@ class RemarkableClient {
     var jsonArray = jsonDecode(response.body);
 
     Map<String, Entity> allEntities = {};
-    var root = Root(client: this, children: []);
+    var root = Root(client: this, children: Set(), allEntities: allEntities);
     allEntities[""] = root;
-    allEntities["trash"] = Trash(client: this, children: []);
+    allEntities["trash"] = Trash(client: this, children: Set());
     for (final entityJson in jsonArray) {
       var entity = Entity.create(this, EntityResponse(entityJson));
       allEntities[entity.id] = entity;

@@ -5,7 +5,7 @@ import 'package:dart_remarkable_api/model/folder.dart';
 class Trash extends Folder {
   Trash({
     required RemarkableClient client,
-    required List<Entity> children,
+    required Set<Entity> children,
   }) : super(
           client: client,
           entityResponse: EntityResponse.empty(
