@@ -27,12 +27,12 @@ void main() {
     root = await client.getRoot(false);
   });
 
-  test("download", () async {
-    Document c = root.children.firstWhere(
-        (child) => child.displayName.contains("LVM") && child is Document);
-    await c.download();
-    expect(await c.isDownloaded(), equals(true));
-  });
+  // test("download", () async {
+  //   Document c = root.children.firstWhere(
+  //       (child) => child.displayName.contains("LVM") && child is Document);
+  //   await c.download();
+  //   expect(await c.isDownloaded(), equals(true));
+  // });
 
   test("deleted document", () async {
     var d = Document(

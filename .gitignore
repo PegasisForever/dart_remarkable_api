@@ -75,3 +75,4 @@ build/
 
 test_auth.json
 test_data
+**/*.mocks.dart
