@@ -14,7 +14,7 @@ class Trash extends Folder {
             EntityType.COLLECTION,
             "Trash",
           ),
-          children: children,
+          children: {},
         );
 
   @override

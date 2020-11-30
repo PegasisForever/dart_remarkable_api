@@ -17,14 +17,15 @@ class Root extends Folder {
             EntityType.COLLECTION,
             "Root",
           ),
-          children: children,
+          children: {},
         );
 
   @override
   void linkRelationship(Map<String, Entity> map) {
+    children.clear();
     for (final entity in map.values) {
       if (entity is! Root && entity.parentId == id) {
-        children.add(entity);
+        children[entity.id]=entity;
       }
     }
   }

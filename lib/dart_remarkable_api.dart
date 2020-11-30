@@ -14,6 +14,7 @@ const BASE_URL =
     "https://document-storage-production-dot-remarkable-production.appspot.com";
 const DEVICE_TOKEN_URL = "https://my.remarkable.com/token/json/2/device/new";
 const USER_TOKEN_URL = "https://my.remarkable.com/token/json/2/user/new";
+const DOCS_LIST_URL="/document-storage/json/2/docs";
 const DEVICE = "desktop-windows";
 const SERVICE_MGR_URL =
     "https://service-manager-production-dot-remarkable-production.appspot.com";
@@ -34,6 +35,7 @@ class RemarkableClient {
   bool get isAuth => deviceToken != null && userToken != null;
 
   Future<void> registerDevice(String code) async {
+    if (deviceToken != null) throw "device is already registered";
     var response = await rmHttpClient.post(DEVICE_TOKEN_URL, body: {
       "code": code,
       "deviceDesc": DEVICE,
@@ -70,7 +72,7 @@ class RemarkableClient {
   // document before downloading.
   Future<Root> getRoot(bool withBlob) async {
     var response = await rmHttpClient.get(
-      "/document-storage/json/2/docs",
+      DOCS_LIST_URL,
       auth: userToken,
       params: withBlob ? {"withBlob": "true"} : null,
     );

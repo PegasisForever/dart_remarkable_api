@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:http/http.dart';
 
 const DEFAULT_HOST =
     "document-storage-production-dot-remarkable-production.appspot.com";
@@ -56,7 +55,7 @@ class RemarkableHttpClient {
     Map<String, String>? headers,
   }) async {
     _httpClient
-        .send(Request("GET", _getUri(path).replace(queryParameters: params)));
+        .send(http.Request("GET", _getUri(path).replace(queryParameters: params)));
     return await _httpClient.get(
       _getUri(path).replace(queryParameters: params),
       headers: _getHeaders(
@@ -66,13 +65,13 @@ class RemarkableHttpClient {
     );
   }
 
-  Future<StreamedResponse> getStreamed(
+  Future<http.StreamedResponse> getStreamed(
     String path, {
     String? auth,
     Map<String, dynamic>? params,
     Map<String, String>? headers,
   }) {
-    var request = Request(
+    var request = http.Request(
       "GET",
       _getUri(path).replace(queryParameters: params),
     )..headers.addAll(_getHeaders(

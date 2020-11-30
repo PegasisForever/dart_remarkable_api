@@ -51,7 +51,7 @@ abstract class Entity {
         return Folder(
           client: client,
           entityResponse: entityResponse,
-          children: Set(),
+          children: {},
         );
       } else {
         return Document(
@@ -81,8 +81,8 @@ abstract class Entity {
         var allEntities = getRoot().allEntities;
         var newParent = allEntities[newParentId] as Folder;
 
-        oldParent.children.remove(this);
-        newParent.children.add(this);
+        oldParent.removeChild(this);
+        newParent.addChild(this);
         parent = newParent;
       }
     } else {
@@ -92,7 +92,7 @@ abstract class Entity {
 
   Future<void> refresh(bool withBlob) async {
     var response = await client.rmHttpClient.get(
-      "/document-storage/json/2/docs",
+      DOCS_LIST_URL,
       auth: client.userToken,
       params: withBlob
           ? {
