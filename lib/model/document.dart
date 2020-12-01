@@ -69,7 +69,7 @@ class Document extends Entity {
         await file.writeAsBytes(data);
       } else {
         var dir = Directory(basePath + '/' + zipEntry.name);
-        await dir.create();
+        await dir.create(recursive: true);
       }
     }
     var metaDataFile = File(basePath + '/.dart_remarkable_api_metadata.json');

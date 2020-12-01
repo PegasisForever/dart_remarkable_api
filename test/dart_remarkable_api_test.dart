@@ -1,5 +1,5 @@
 // @dart=2.9
-
+@Timeout(const Duration(days: 1))
 import 'dart:convert';
 import 'dart:io';
 
@@ -23,10 +23,23 @@ http.Response mockResponse(int status, String body) {
   return response;
 }
 
+http.StreamedResponse mockStreamedResponse(int status, String filePath) {
+  var response = MockStreamedResponse();
+  when(response.statusCode).thenReturn(status);
+  var stream = MockByteStream();
+  when(stream.toBytes()).thenAnswer((_) => File(filePath).readAsBytes());
+  when(response.stream).thenAnswer((_) => stream);
+  return response;
+}
 
 const MOCK_SERVER_DATA_PATH = "test_data/mock_server/";
 
-@GenerateMocks([http.Response, RemarkableHttpClient])
+@GenerateMocks([
+  http.Response,
+  http.StreamedResponse,
+  http.ByteStream,
+  RemarkableHttpClient
+])
 void main() {
   var rmHttpClient = MockRemarkableHttpClient();
   var client = RemarkableClient(
@@ -101,8 +114,7 @@ void main() {
         auth: anyNamed("auth"),
       )).thenAnswer((_) async => mockResponse(500, "error"));
 
-      expect(() async => await client.renewToken(),
-          throwsA(isA<String>()));
+      expect(() async => await client.renewToken(), throwsA(isA<String>()));
 
       verifyInOrder([
         rmHttpClient.post(
@@ -139,19 +151,62 @@ void main() {
     });
   });
 
-  group("Query (start without blob)", () {
+  group("Query", () {
+    queryTestGroup(
+      rmHttpClient: rmHttpClient,
+      client: client,
+      name: "Start without blob",
+    );
+
+    queryTestGroup(
+      rmHttpClient: rmHttpClient,
+      client: client,
+      name: "Start with blob",
+      withBlob: true,
+    );
+
+    queryTestGroup(
+      rmHttpClient: rmHttpClient,
+      client: client,
+      name: "Start with expired blob",
+      withBlob: true,
+      expired: true,
+    );
+  });
+}
+
+void queryTestGroup({
+  RemarkableHttpClient rmHttpClient,
+  RemarkableClient client,
+  String name,
+  bool withBlob = false,
+  bool expired = false,
+}) {
+  group(name, () {
     List<Root> root = [null];
 
-    var fileList = getFileListWithoutBlob();
+    var fileList;
+    if (withBlob) {
+      fileList = getFileListWithBlob(expired: expired);
+    } else {
+      fileList = getFileListWithoutBlob();
+    }
+    var fileListWithBlob = getFileListWithBlob();
+
+    setUp(() {
+      reset(rmHttpClient);
+    });
 
     test("getRoot throws no error", () async {
       when(rmHttpClient.get(
         any,
         auth: anyNamed("auth"),
+        params: anyNamed("params"),
       )).thenAnswer((_) async => mockResponse(200, jsonEncode(fileList)));
 
-      root[0] = await client.getRoot(false);
+      root[0] = await client.getRoot(withBlob);
 
+      expect(root[0], isNotNull);
       verifyInOrder([
         rmHttpClient.get(
           argThat(equals(DOCS_LIST_URL)),
@@ -159,10 +214,15 @@ void main() {
             equals("user_token"),
             named: "auth",
           ),
-          params: argThat(
-            isNull,
-            named: "params",
-          ),
+          params: withBlob
+              ? argThat(
+                  containsPair("withBlob", "true"),
+                  named: "params",
+                )
+              : argThat(
+                  isNull,
+                  named: "params",
+                ),
         ),
       ]);
     });
@@ -182,8 +242,65 @@ void main() {
       },
     });
 
-    test("Download files", () async {
+    setUp(() async {
+      var dir = Directory(client.dataPath);
+      await dir.delete(recursive: true);
+      await dir.create(recursive: true);
+    });
 
+    test("Download files", () async {
+      for (Document document
+          in root[0].allEntities.values.where((entity) => entity is Document)) {
+        when(rmHttpClient.get(
+          DOCS_LIST_URL,
+          auth: anyNamed("auth"),
+          params: anyNamed("params"),
+        )).thenAnswer((_) async => mockResponse(
+              200,
+              jsonEncode([
+                fileListWithBlob
+                    .firstWhere((fileMap) => fileMap["ID"] == document.id)
+              ]),
+            ));
+        when(rmHttpClient.getStreamed(
+          any,
+          auth: anyNamed("auth"),
+        )).thenAnswer((_) async => mockStreamedResponse(
+              200,
+              MOCK_SERVER_DATA_PATH + document.id,
+            ));
+
+        expect(await document.isDownloaded(), equals(false));
+
+        await document.download();
+        verifyInOrder([
+          if (expired || !withBlob)
+            rmHttpClient.get(
+              DOCS_LIST_URL,
+              auth: argThat(
+                equals("user_token"),
+                named: "auth",
+              ),
+              params: argThat(
+                allOf([
+                  containsPair("withBlob", "true"),
+                  containsPair("doc", document.id),
+                ]),
+                named: "params",
+              ),
+            ),
+          rmHttpClient.getStreamed(
+            "mock://" + document.id,
+            auth: argThat(
+              equals("user_token"),
+              named: "auth",
+            ),
+          )
+        ]);
+        expect(await document.isDownloaded(), equals(true));
+        expect(await Directory(client.dataPath + "/" + document.id).exists(),
+            equals(true));
+      }
     });
   });
 }
@@ -203,6 +320,38 @@ void verifyFileStructure(List<Root> root, Map<String, dynamic> fileStructure) {
       }
 
       step(root[0]);
+    });
+
+    test("File count is correct", () async {
+      var countFromFileStructure = 0;
+      void step1(dynamic fileStructure) {
+        expect(fileStructure, anyOf(isA<String>(), isA<Map>()));
+        countFromFileStructure++;
+        if (fileStructure is Map) {
+          for (var child in fileStructure.values) {
+            step1(child);
+          }
+        }
+      }
+
+      step1(fileStructure);
+
+      var countFromRoot = root[0].allEntities.length;
+      expect(countFromRoot, equals(countFromFileStructure));
+
+      var countFromRootTree = 0;
+      void step2(Entity entity) {
+        countFromRootTree++;
+        if (entity is Folder) {
+          for (var child in entity.children.values) {
+            step2(child);
+          }
+        }
+      }
+
+      step2(root[0]);
+
+      expect(countFromRootTree, equals(countFromFileStructure));
     });
 
     test("Parent & child relation is correct", () {
@@ -246,14 +395,19 @@ List<dynamic> getFileListWithBlob({bool expired = false}) {
   var fileList =
       jsonDecode(File(MOCK_SERVER_DATA_PATH + "list.json").readAsStringSync());
   for (var fileMap in fileList) {
-    fileMap["BlobURLGet"] = "mock://" + fileMap["ID"];
-    if (expired) {
-      fileMap["BlobURLGetExpires"] =
-          DateTime.now().subtract(Duration(days: 1)).toUtc().toIso8601String();
-    } else {
-      fileMap["BlobURLGetExpires"] =
-          DateTime.now().add(Duration(days: 1)).toUtc().toIso8601String();
+    if (fileMap["Type"] == "DocumentType") {
+      fileMap["BlobURLGet"] = "mock://" + fileMap["ID"];
+      if (expired) {
+        fileMap["BlobURLGetExpires"] = DateTime.now()
+            .subtract(Duration(days: 1))
+            .toUtc()
+            .toIso8601String();
+      } else {
+        fileMap["BlobURLGetExpires"] =
+            DateTime.now().add(Duration(days: 1)).toUtc().toIso8601String();
+      }
     }
   }
+
   return fileList;
 }
