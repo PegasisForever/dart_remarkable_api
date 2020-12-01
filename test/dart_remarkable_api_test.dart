@@ -23,9 +23,6 @@ http.Response mockResponse(int status, String body) {
   return response;
 }
 
-http.Response mockResponseFromFile(int status, String path) {
-  return mockResponse(status, File(path).readAsStringSync());
-}
 
 const MOCK_SERVER_DATA_PATH = "test_data/mock_server/";
 
@@ -38,6 +35,34 @@ void main() {
   );
 
   group("Register", () {
+    test('Register device failed', () async {
+      expect(client.isAuth, equals(false));
+
+      when(rmHttpClient.post(
+        any,
+        body: anyNamed("body"),
+      )).thenAnswer((_) async => mockResponse(500, "error"));
+
+      expect(() async => await client.registerDevice("123456"),
+          throwsA(isA<String>()));
+
+      verifyInOrder([
+        rmHttpClient.post(
+          argThat(equals(DEVICE_TOKEN_URL)),
+          body: argThat(
+            allOf([
+              containsPair("code", "123456"),
+              contains("deviceDesc"),
+              contains("deviceID"),
+            ]),
+            named: "body",
+          ),
+        ),
+      ]);
+      expect(client.deviceToken, isNull);
+      expect(client.isAuth, equals(false));
+    });
+
     test('Register device', () async {
       expect(client.isAuth, equals(false));
 
@@ -68,6 +93,28 @@ void main() {
     test('Register device again', () async {
       expect(() async => await client.registerDevice("123456"),
           throwsA(isA<String>()));
+    });
+
+    test("Renew token failed", () async {
+      when(rmHttpClient.post(
+        any,
+        auth: anyNamed("auth"),
+      )).thenAnswer((_) async => mockResponse(500, "error"));
+
+      expect(() async => await client.renewToken(),
+          throwsA(isA<String>()));
+
+      verifyInOrder([
+        rmHttpClient.post(
+          argThat(equals(USER_TOKEN_URL)),
+          auth: argThat(
+            equals("device_token"),
+            named: "auth",
+          ),
+        ),
+      ]);
+      expect(client.userToken, isNull);
+      expect(client.isAuth, equals(false));
     });
 
     test("Renew token", () async {
@@ -135,7 +182,9 @@ void main() {
       },
     });
 
-    test("Download files", () async {});
+    test("Download files", () async {
+
+    });
   });
 }
 
