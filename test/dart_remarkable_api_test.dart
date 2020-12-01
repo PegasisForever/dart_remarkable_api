@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_remarkable_api/dart_remarkable_api.dart';
+import 'package:dart_remarkable_api/model/document.dart';
 import 'package:dart_remarkable_api/model/entity.dart';
 import 'package:dart_remarkable_api/model/folder.dart';
 import 'package:dart_remarkable_api/model/root.dart';
-import 'package:dart_remarkable_api/model/trash.dart';
 import 'package:dart_remarkable_api/remarkable_http_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:mockito/annotations.dart';
@@ -93,66 +93,97 @@ void main() {
   });
 
   group("Query (start without blob)", () {
-    Root root;
-    group("getRoot without blob", () {
-      var fileList = getFileListWithoutBlob();
+    List<Root> root = [null];
 
-      test("getRoot throws no error", () async {
-        when(rmHttpClient.get(
-          any,
-          auth: anyNamed("auth"),
-        )).thenAnswer((_) async => mockResponse(200, jsonEncode(fileList)));
+    var fileList = getFileListWithoutBlob();
 
-        root = await client.getRoot(false);
-      });
+    test("getRoot throws no error", () async {
+      when(rmHttpClient.get(
+        any,
+        auth: anyNamed("auth"),
+      )).thenAnswer((_) async => mockResponse(200, jsonEncode(fileList)));
 
-      test("All entity is included", () async {
-        // +2 (root and trash)
-        expect(root.allEntities.length, equals(fileList.length + 2));
-        expect(root.allEntities, contains(""));
-        expect(root.allEntities, contains("trash"));
-        for (var fileMap in fileList) {
-          expect(root.allEntities, contains(fileMap["ID"]));
+      root[0] = await client.getRoot(false);
+
+      verifyInOrder([
+        rmHttpClient.get(
+          argThat(equals(DOCS_LIST_URL)),
+          auth: argThat(
+            equals("user_token"),
+            named: "auth",
+          ),
+          params: argThat(
+            isNull,
+            named: "params",
+          ),
+        ),
+      ]);
+    });
+
+    verifyFileStructure(root, {
+      "82329c95-186e-4d07-99a3-782d2b5ff867": "",
+      "19b21dd8-c3b1-4ca9-9b56-9178861ef890": {
+        "a7f873de-f3af-4fdb-a5fd-6f34caaf6cfc": "",
+        "97dd1a64-d721-4ef1-b9d7-6fe726b00aab": {},
+      },
+      "trash": {
+        "fd5223e4-4688-42ed-8372-59235dc9bb3a": "",
+        "4bed3e2c-c79b-4203-b87d-8ac9a6b70595": {
+          "9f9d37da-a694-4ff9-a8b6-c29108050ed7": "",
+          "9ac7b3f8-dd61-4a05-80dd-0506c34938fa": {},
+        },
+      },
+    });
+
+    test("Download files", () async {});
+  });
+}
+
+void verifyFileStructure(List<Root> root, Map<String, dynamic> fileStructure) {
+  group("Verify file tree", () {
+    test("No circle in the tree", () async {
+      var visited = Set<Entity>();
+      void step(Entity entity) {
+        expect(visited, isNot(contains(entity)));
+        visited.add(entity);
+        if (entity is Folder) {
+          for (var child in entity.children.values) {
+            step(child);
+          }
         }
-      });
+      }
 
-      test("Parent & child relation is correct", () async {
-        for (var entity in root.allEntities.values) {
-          // if folder contains all its children
-          if (entity is Folder) {
-            for (var childFileMap in fileList
-                .where((fileMap) => fileMap["Parent"] == entity.id)) {
-              expect(entity.children, contains(childFileMap["ID"]));
-            }
-          }
-          // if entity.parentId == entity.parent.id
-          if (entity is! Root) {
-            expect(entity.parentId, equals(entity.parent.id));
-          }
-          // if parent is correct
-          if (entity is! Root && entity is! Trash) {
-            expect(
-                entity.parent.id,
-                equals(fileList.firstWhere(
-                    (fileMap) => fileMap["ID"] == entity.id)["Parent"]));
+      step(root[0]);
+    });
+
+    test("Parent & child relation is correct", () {
+      for (var entity in root[0].allEntities.values) {
+        if (entity is! Root) {
+          expect(entity.parentId, equals(entity.parent.id));
+          expect(entity.parent.children, contains(entity.id));
+        }
+      }
+    });
+
+    test("All files are in the correct position", () async {
+      void step(Entity entity, dynamic fileStructure) {
+        expect(fileStructure, anyOf(isA<String>(), isA<Map>()));
+        if (fileStructure is String) {
+          expect(entity, isA<Document>());
+        } else if (fileStructure is Map) {
+          expect(entity, isA<Folder>());
+          var folder = entity as Folder;
+          expect(
+            folder.children.values.map((e) => e.id),
+            containsAll(fileStructure.keys),
+          );
+          for (var child in folder.children.values) {
+            step(child, fileStructure[child.id]);
           }
         }
-      });
+      }
 
-      test("Tree structure is correct", () async {
-        var visited = Set<Entity>();
-        bool step(Entity entity) {
-          expect(visited, isNot(contains(entity)));
-          visited.add(entity);
-          if (entity is Folder) {
-            for (var child in entity.children.values) {
-              step(child);
-            }
-          }
-        }
-
-        step(root);
-      });
+      step(root[0], fileStructure);
     });
   });
 }
