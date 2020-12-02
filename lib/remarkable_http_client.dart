@@ -8,17 +8,17 @@ const DEFAULT_USER_AGENT = "dart_remarkable_api";
 
 class RemarkableHttpClient {
   final String userAgent;
-  final _httpClient = http.Client();
+  final _httpClient;
 
   RemarkableHttpClient({
     this.userAgent = DEFAULT_USER_AGENT,
-  });
+    http.Client? httpClient,
+  }) : _httpClient = httpClient ?? http.Client();
 
   Map<String, String> _getHeaders({
-    required Map<String, String>? inputHeaders,
     required String? auth,
   }) {
-    var headers = inputHeaders ?? {};
+    Map<String, String> headers = {};
     headers["user-agent"] = userAgent;
     if (auth != null) {
       headers["Authorization"] = "Bearer " + auth;
@@ -39,11 +39,10 @@ class RemarkableHttpClient {
     String path, {
     String? auth,
     Map<String, dynamic>? body,
-    Map<String, String>? headers,
   }) async {
     return await _httpClient.post(
       _getUri(path),
-      headers: _getHeaders(inputHeaders: headers, auth: auth),
+      headers: _getHeaders(auth: auth),
       body: jsonEncode(body),
     );
   }
@@ -52,16 +51,10 @@ class RemarkableHttpClient {
     String path, {
     String? auth,
     Map<String, dynamic>? params,
-    Map<String, String>? headers,
   }) async {
-    _httpClient
-        .send(http.Request("GET", _getUri(path).replace(queryParameters: params)));
     return await _httpClient.get(
       _getUri(path).replace(queryParameters: params),
-      headers: _getHeaders(
-        inputHeaders: headers,
-        auth: auth,
-      ),
+      headers: _getHeaders(auth: auth),
     );
   }
 
@@ -69,15 +62,11 @@ class RemarkableHttpClient {
     String path, {
     String? auth,
     Map<String, dynamic>? params,
-    Map<String, String>? headers,
   }) {
     var request = http.Request(
       "GET",
       _getUri(path).replace(queryParameters: params),
-    )..headers.addAll(_getHeaders(
-        inputHeaders: headers,
-        auth: auth,
-      ));
+    )..headers.addAll(_getHeaders(auth: auth));
     return _httpClient.send(request);
   }
 
@@ -85,14 +74,10 @@ class RemarkableHttpClient {
     String path, {
     String? auth,
     dynamic data,
-    Map<String, String>? headers,
   }) async {
     return await _httpClient.put(
       _getUri(path),
-      headers: _getHeaders(
-        inputHeaders: headers,
-        auth: auth,
-      ),
+      headers: _getHeaders(auth: auth),
       body: data,
     );
   }

@@ -38,7 +38,7 @@ const MOCK_SERVER_DATA_PATH = "test_data/mock_server/";
   http.Response,
   http.StreamedResponse,
   http.ByteStream,
-  RemarkableHttpClient
+  RemarkableHttpClient,
 ])
 void main() {
   var rmHttpClient = MockRemarkableHttpClient();
@@ -47,8 +47,15 @@ void main() {
     dataPath: "./test_data/client",
   );
 
+  test("Use default rm http client",(){
+    var client = RemarkableClient(
+      dataPath: "./test_data/client",
+    );
+    expect(client.rmHttpClient.runtimeType, equals(RemarkableHttpClient().runtimeType));
+  });
+
   group("Register", () {
-    test('Register device failed', () async {
+    test("Register device failed", () async {
       expect(client.isAuth, equals(false));
 
       when(rmHttpClient.post(
@@ -63,11 +70,11 @@ void main() {
         rmHttpClient.post(
           argThat(equals(DEVICE_TOKEN_URL)),
           body: argThat(
-            allOf([
+            allOf(
               containsPair("code", "123456"),
               contains("deviceDesc"),
               contains("deviceID"),
-            ]),
+            ),
             named: "body",
           ),
         ),
@@ -90,11 +97,11 @@ void main() {
         rmHttpClient.post(
           argThat(equals(DEVICE_TOKEN_URL)),
           body: argThat(
-            allOf([
+            allOf(
               containsPair("code", "123456"),
               contains("deviceDesc"),
               contains("deviceID"),
-            ]),
+            ),
             named: "body",
           ),
         ),
@@ -282,10 +289,10 @@ void queryTestGroup({
                 named: "auth",
               ),
               params: argThat(
-                allOf([
+                allOf(
                   containsPair("withBlob", "true"),
                   containsPair("doc", document.id),
-                ]),
+                ),
                 named: "params",
               ),
             ),
